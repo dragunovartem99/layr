@@ -1,0 +1,21 @@
+{
+	"name": "layr",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc && vite build",
+		"dev": "vite",
+		"format": "oxfmt --write",
+		"format:check": "oxfmt --check",
+		"lint": "oxlint --fix",
+		"lint:check": "oxlint",
+		"preview": "vite preview"
+	},
+	"devDependencies": {
+		"@dragunovartem99/oxfmt-config": "^2.0.2",
+		"@dragunovartem99/oxlint-config": "^1.0.0",
+		"typescript": "~6.0.2",
+		"vite": "^8.1.0"
+	}
+}
