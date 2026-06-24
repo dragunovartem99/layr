@@ -40,7 +40,7 @@ export class Entry {
 		const copyBtn = this.el.querySelector(".layr__btn--copy")! as HTMLButtonElement;
 		copyBtn.addEventListener("click", (e) => {
 			e.stopPropagation();
-			navigator.clipboard.writeText(this.rawJson).then(() => {
+			navigator.clipboard.writeText(this.#formattedJson).then(() => {
 				copyBtn.textContent = "Copied!";
 				setTimeout(() => {
 					copyBtn.textContent = "Copy";
