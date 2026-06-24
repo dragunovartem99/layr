@@ -1,0 +1,11 @@
+name: CI
+
+on:
+    pull_request:
+        branches: ["main"]
+
+jobs:
+    pipes:
+        uses: dragunovartem99/pipes/.github/workflows/ci.yaml@main
+        with:
+            run-test: false

@@ -10,7 +10,8 @@
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"types:check": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.0.2",
