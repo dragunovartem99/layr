@@ -11,7 +11,8 @@
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
 		"preview": "vite preview",
-		"types:check": "tsc --noEmit"
+		"types:check": "tsc --noEmit",
+		"zip:google": "zip -r dist-google.zip dist"
 	},
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.0.2",
