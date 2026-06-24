@@ -1,8 +1,24 @@
 {
 	"name": "layr",
-	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"description": "dataLayer inspector",
+	"keywords": [],
+	"tags": ["dataLayer", "inspector", "analytics", "debugging", "GTM", "tag-manager"],
+	"homepage": "https://github.com/dragunovartem99/layr#readme",
+	"bugs": {
+		"url": "https://github.com/dragunovartem99/layr/issues",
+		"email": "dragunovartem99@gmail.com"
+	},
+	"license": "MIT",
+	"author": {
+		"name": "Artem Dragunov",
+		"email": "dragunovartem99@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/dragunovartem99/layr.git"
+	},
 	"scripts": {
 		"build": "tsc && vite build",
 		"dev": "vite",
@@ -10,7 +26,7 @@
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
-		"preview": "vite preview",
+		"test": "echo \"Error: no test specified\" && exit 1",
 		"types:check": "tsc --noEmit",
 		"zip:google": "zip -r dist-google.zip dist"
 	},
