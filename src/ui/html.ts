@@ -1,18 +1,12 @@
-export function panelHtml({ iconUrl }: { iconUrl: string }): string {
+export function panelHtml(): string {
 	return `
 		<header class="layr__toolbar">
-			<span class="layr__brand">
-				<img class="layr__icon" src="${iconUrl}" alt="" width="16" height="16" />
-				Layr
-			</span>
 			<input class="layr__filter" type="search" placeholder="Filter events…"
 				autocomplete="off" spellcheck="false" />
 			<span class="layr__count" aria-live="polite"></span>
 			<button class="layr__btn layr__btn--clear" type="button">Clear</button>
-			<button class="layr__btn layr__btn--close" type="button" aria-label="Close">✕</button>
 		</header>
-		<ol class="layr__log" aria-label="dataLayer events"></ol>
-		<div class="layr__resize" aria-hidden="true"></div>`;
+		<ol class="layr__log" aria-label="dataLayer events"></ol>`;
 }
 
 export function entryHtml({ order, time }: { order: number; time: string }): string {

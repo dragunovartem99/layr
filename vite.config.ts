@@ -5,14 +5,15 @@ export default defineConfig({
 	build: {
 		outDir: "dist",
 		lib: {
-			entry: "src/index.ts",
+			entry: "src/content-main.ts",
 			formats: ["iife"],
 			name: "Layr",
 		},
 		rollupOptions: {
 			output: {
-				entryFileNames: "content.js",
+				entryFileNames: "content-main.js",
 			},
 		},
+		emptyOutDir: true,
 	},
 });

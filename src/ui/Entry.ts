@@ -1,6 +1,6 @@
 import { entryHtml } from "./html.ts";
-import { Highlight } from "./Highlight.ts";
-import { Parse } from "./Parse.ts";
+import { highlight } from "../lib/highlight.ts";
+import { expandJsonStrings } from "../lib/expandJson.ts";
 
 const pad = (n: number, len = 2) => String(n).padStart(len, "0");
 
@@ -26,7 +26,7 @@ export class Entry {
 		this.rawJson = JSON.stringify(raw);
 		this.#rawJsonLower = this.rawJson.toLowerCase();
 		this.#eventName = ((raw as Record<string, unknown>).event as string) ?? "(anonymous)";
-		this.#formattedJson = JSON.stringify(new Parse(raw).jsonStrings(), null, 2);
+		this.#formattedJson = JSON.stringify(expandJsonStrings({ value: raw }), null, 2);
 
 		this.el = document.createElement("li");
 		this.el.className = "layr__entry";
@@ -38,15 +38,13 @@ export class Entry {
 		this.#codeEl.textContent = this.#formattedJson;
 
 		const copyBtn = this.el.querySelector(".layr__btn--copy")! as HTMLButtonElement;
-		copyBtn.addEventListener("click", (e) => {
+		copyBtn.addEventListener("click", async (e) => {
 			e.stopPropagation();
-			navigator.clipboard.writeText(this.#formattedJson).then(() => {
-				copyBtn.textContent = "Copied!";
-				setTimeout(() => {
-					copyBtn.textContent = "Copy";
-				}, 1500);
-				return;
-			});
+			await navigator.clipboard.writeText(this.#formattedJson);
+			copyBtn.textContent = "Copied!";
+			setTimeout(() => {
+				copyBtn.textContent = "Copy";
+			}, 1500);
 		});
 	}
 
@@ -63,8 +61,8 @@ export class Entry {
 		const matches = this.#rawJsonLower.includes(query.toLowerCase());
 		this.el.hidden = !matches;
 		if (matches) {
-			this.#eventEl.innerHTML = new Highlight(this.#eventName).apply(query);
-			this.#codeEl.innerHTML = new Highlight(this.#formattedJson).apply(query);
+			this.#eventEl.innerHTML = highlight({ text: this.#eventName, query });
+			this.#codeEl.innerHTML = highlight({ text: this.#formattedJson, query });
 		}
 		return matches;
 	}
