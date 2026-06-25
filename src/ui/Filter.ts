@@ -1,11 +1,10 @@
 import type { Entry } from "./Entry.ts";
-import { Signal } from "./Signal.ts";
-import type { Storage } from "./Storage.ts";
+import { Signal } from "../lib/Signal.ts";
+import { getFilterQuery, setFilterQuery, clearFilterQuery } from "../lib/storage.ts";
 
 type FilterOptions = {
 	input: HTMLInputElement;
 	count: HTMLElement;
-	storage: Storage;
 	entries: Signal<Entry[]>;
 };
 
@@ -14,18 +13,16 @@ export class Filter {
 
 	#input: HTMLInputElement;
 	#count: HTMLElement;
-	#storage: Storage;
 	#entries: Signal<Entry[]>;
 
-	constructor({ input, count, storage, entries }: FilterOptions) {
+	constructor({ input, count, entries }: FilterOptions) {
 		this.#input = input;
 		this.#count = count;
-		this.#storage = storage;
 		this.#entries = entries;
 
 		this.query = new Signal("");
 
-		const saved = storage.filterQuery();
+		const saved = getFilterQuery();
 		if (saved) {
 			this.#input.value = saved;
 			this.query.value = saved;
@@ -36,7 +33,7 @@ export class Filter {
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				this.query.value = this.#input.value;
-				this.#storage.setFilterQuery(this.#input.value);
+				setFilterQuery({ query: this.#input.value });
 			}, 300);
 		});
 
@@ -47,7 +44,7 @@ export class Filter {
 	reset(): void {
 		this.#input.value = "";
 		this.query.value = "";
-		this.#storage.clearFilterQuery();
+		clearFilterQuery();
 		this.#applyAndCount();
 	}
 

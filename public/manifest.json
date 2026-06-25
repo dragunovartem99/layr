@@ -1,15 +1,24 @@
 {
 	"manifest_version": 3,
 	"name": "Layr",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "dataLayer inspector",
-	"permissions": ["activeTab", "scripting"],
+	"permissions": ["sidePanel"],
+	"side_panel": {
+		"default_path": "sidepanel.html"
+	},
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
-			"js": ["content.js"],
+			"js": ["content-main.js"],
 			"world": "MAIN",
-			"run_at": "document_end"
+			"run_at": "document_start"
+		},
+		{
+			"matches": ["<all_urls>"],
+			"js": ["content-isolated.js"],
+			"world": "ISOLATED",
+			"run_at": "document_start"
 		}
 	],
 	"action": {
