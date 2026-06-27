@@ -1,6 +1,6 @@
-import { entryHtml } from "./html.ts";
-import { highlight } from "../lib/highlight.ts";
 import { expandJsonStrings } from "../lib/expandJson.ts";
+import { highlight } from "../lib/highlight.ts";
+import { entryHtml } from "./html.ts";
 
 const pad = (n: number, len = 2) => String(n).padStart(len, "0");
 

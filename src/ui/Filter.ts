@@ -1,6 +1,6 @@
-import type { Entry } from "./Entry.ts";
 import { Signal } from "../lib/Signal.ts";
 import { getFilterQuery, setFilterQuery, clearFilterQuery } from "../lib/storage.ts";
+import type { Entry } from "./Entry.ts";
 
 type FilterOptions = {
 	input: HTMLInputElement;

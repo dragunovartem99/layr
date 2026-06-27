@@ -1,7 +1,7 @@
+import { Signal } from "./lib/Signal.ts";
 import { Entry } from "./ui/Entry.ts";
 import { Filter } from "./ui/Filter.ts";
 import { Panel } from "./ui/Panel.ts";
-import { Signal } from "./lib/Signal.ts";
 
 type ChromePort = {
 	postMessage(msg: unknown): void;
