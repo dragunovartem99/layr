@@ -4,6 +4,21 @@ const MAX_BUFFER = 500;
 /** @type {Set<chrome.runtime.Port>} */
 const panels = new Set();
 
+/** The service worker is unloaded after ~30s idle, so `buffers` is persisted to
+ * session storage and rehydrated here to survive restarts. Chrome does not
+ * support top-level await in service workers, so this stays an async IIFE. */
+// oxlint-disable-next-line unicorn/prefer-top-level-await
+const ready = (async () => {
+	const data = await chrome.storage.session.get("buffers");
+	for (const [tabId, events] of Object.entries(data.buffers ?? {})) {
+		buffers.set(Number(tabId), events);
+	}
+})();
+
+function persistBuffers() {
+	void chrome.storage.session.set({ buffers: Object.fromEntries(buffers) });
+}
+
 function sendToPanel(port, msg) {
 	try {
 		port.postMessage(msg);
@@ -22,14 +37,18 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 	const tabId = sender.tab?.id;
 	if (tabId === undefined) return;
 
-	const buf = buffers.get(tabId) ?? [];
-	buf.push(msg.payload);
-	if (buf.length > MAX_BUFFER) buf.shift();
-	buffers.set(tabId, buf);
+	void (async () => {
+		await ready;
+		const buf = buffers.get(tabId) ?? [];
+		buf.push(msg.payload);
+		if (buf.length > MAX_BUFFER) buf.shift();
+		buffers.set(tabId, buf);
+		persistBuffers();
 
-	for (const port of panels) {
-		sendToPanel(port, { type: "layr:event", tabId, payload: msg.payload });
-	}
+		for (const port of panels) {
+			sendToPanel(port, { type: "layr:event", tabId, payload: msg.payload });
+		}
+	})();
 });
 
 chrome.runtime.onConnect.addListener((port) => {
@@ -38,13 +57,17 @@ chrome.runtime.onConnect.addListener((port) => {
 	port.onDisconnect.addListener(() => panels.delete(port));
 
 	void (async () => {
+		await ready;
 		const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 		if (tab?.id !== undefined) pushReset(port, tab.id);
 	})();
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
-	for (const port of panels) pushReset(port, tabId);
+	void (async () => {
+		await ready;
+		for (const port of panels) pushReset(port, tabId);
+	})();
 });
 
 chrome.action.onClicked.addListener((tab) => {
@@ -52,4 +75,10 @@ chrome.action.onClicked.addListener((tab) => {
 	chrome.sidePanel.open({ tabId: tab.id });
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => buffers.delete(tabId));
+chrome.tabs.onRemoved.addListener((tabId) => {
+	void (async () => {
+		await ready;
+		buffers.delete(tabId);
+		persistBuffers();
+	})();
+});

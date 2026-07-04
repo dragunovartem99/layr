@@ -3,7 +3,7 @@
 	"name": "Layr",
 	"version": "0.2.0",
 	"description": "dataLayer inspector",
-	"permissions": ["sidePanel"],
+	"permissions": ["sidePanel", "storage"],
 	"side_panel": {
 		"default_path": "sidepanel.html"
 	},
