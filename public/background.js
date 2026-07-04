@@ -1,6 +1,7 @@
 const MESSAGE_TYPE = {
 	RESET: "layr:reset",
 	EVENT: "layr:event",
+	CLOSE: "layr:close",
 };
 const PANEL_PORT_NAME = "layr:panel";
 
@@ -78,6 +79,10 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 
 chrome.action.onClicked.addListener((tab) => {
 	if (tab.id === undefined) return;
+	if (panels.size > 0) {
+		for (const port of panels) sendToPanel(port, { type: MESSAGE_TYPE.CLOSE });
+		return;
+	}
 	chrome.sidePanel.open({ tabId: tab.id });
 });
 

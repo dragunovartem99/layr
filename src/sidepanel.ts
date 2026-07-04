@@ -18,11 +18,16 @@ declare const chrome: {
 
 type ResetMessage = { type: typeof MESSAGE_TYPE.RESET; tabId?: number; events?: object[] };
 type EventMessage = { type: typeof MESSAGE_TYPE.EVENT; tabId?: number; payload?: object };
-type PortMessage = ResetMessage | EventMessage;
+type CloseMessage = { type: typeof MESSAGE_TYPE.CLOSE };
+type PortMessage = ResetMessage | EventMessage | CloseMessage;
 
 function isPortMessage(message: unknown): message is PortMessage {
 	if (typeof message !== "object" || message === null || !("type" in message)) return false;
-	return message.type === MESSAGE_TYPE.RESET || message.type === MESSAGE_TYPE.EVENT;
+	return (
+		message.type === MESSAGE_TYPE.RESET ||
+		message.type === MESSAGE_TYPE.EVENT ||
+		message.type === MESSAGE_TYPE.CLOSE
+	);
 }
 
 const entries = new Signal<Entry[]>([]);
@@ -68,8 +73,14 @@ function handleEvent(message: EventMessage): void {
 
 function onPortMessage(message: unknown): void {
 	if (!isPortMessage(message)) return;
-	if (message.type === MESSAGE_TYPE.RESET) handleReset(message);
-	else handleEvent(message);
+	switch (message.type) {
+		case MESSAGE_TYPE.RESET:
+			return handleReset(message);
+		case MESSAGE_TYPE.EVENT:
+			return handleEvent(message);
+		case MESSAGE_TYPE.CLOSE:
+			return window.close();
+	}
 }
 
 function connect(): void {
