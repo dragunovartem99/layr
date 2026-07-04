@@ -29,9 +29,7 @@ document.body.append(panel.el);
 
 const filter = new Filter({ input: panel.filterInput, count: panel.countEl, entries });
 
-const port = chrome.runtime.connect({ name: "layr:panel" });
-
-port.onMessage.addListener((msg: unknown) => {
+function onPortMessage(msg: unknown): void {
 	const m = msg as {
 		type: string;
 		tabId?: number;
@@ -51,7 +49,15 @@ port.onMessage.addListener((msg: unknown) => {
 	if (m.type === "layr:event" && m.tabId === currentTabId && m.payload) {
 		appendEntry(m.payload);
 	}
-});
+}
+
+function connect(): void {
+	const port = chrome.runtime.connect({ name: "layr:panel" });
+	port.onMessage.addListener(onPortMessage);
+	port.onDisconnect.addListener(() => connect());
+}
+
+connect();
 
 function appendEntry(raw: object): void {
 	const entry = new Entry({ order: entries.value.length + 1, raw });
