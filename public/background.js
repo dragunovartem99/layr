@@ -77,7 +77,7 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 });
 
 chrome.action.onClicked.addListener((tab) => {
-	if (!tab.url?.startsWith("http") || tab.id === undefined) return;
+	if (tab.id === undefined) return;
 	chrome.sidePanel.open({ tabId: tab.id });
 });
 
