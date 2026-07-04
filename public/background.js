@@ -1,3 +1,9 @@
+const MESSAGE_TYPE = {
+	RESET: "layr:reset",
+	EVENT: "layr:event",
+};
+const PANEL_PORT_NAME = "layr:panel";
+
 /** @type {Map<number, object[]>} */
 const buffers = new Map();
 const MAX_BUFFER = 500;
@@ -29,11 +35,11 @@ function sendToPanel(port, msg) {
 
 function pushReset(port, tabId) {
 	const events = buffers.get(tabId) ?? [];
-	sendToPanel(port, { type: "layr:reset", tabId, events });
+	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events });
 }
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
-	if (msg.type !== "layr:event") return;
+	if (msg.type !== MESSAGE_TYPE.EVENT) return;
 	const tabId = sender.tab?.id;
 	if (tabId === undefined) return;
 
@@ -46,13 +52,13 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 		persistBuffers();
 
 		for (const port of panels) {
-			sendToPanel(port, { type: "layr:event", tabId, payload: msg.payload });
+			sendToPanel(port, { type: MESSAGE_TYPE.EVENT, tabId, payload: msg.payload });
 		}
 	})();
 });
 
 chrome.runtime.onConnect.addListener((port) => {
-	if (port.name !== "layr:panel") return;
+	if (port.name !== PANEL_PORT_NAME) return;
 	panels.add(port);
 	port.onDisconnect.addListener(() => panels.delete(port));
 

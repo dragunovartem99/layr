@@ -1,12 +1,13 @@
+import { MESSAGE_TYPE, PANEL_PORT_NAME } from "./lib/messages.ts";
 import { Signal } from "./lib/Signal.ts";
 import { Entry } from "./ui/Entry.ts";
 import { Filter } from "./ui/Filter.ts";
 import { Panel } from "./ui/Panel.ts";
 
 type ChromePort = {
-	postMessage(msg: unknown): void;
-	onMessage: { addListener(fn: (msg: unknown) => void): void };
-	onDisconnect: { addListener(fn: () => void): void };
+	postMessage(message: unknown): void;
+	onMessage: { addListener(listener: (message: unknown) => void): void };
+	onDisconnect: { addListener(listener: () => void): void };
 };
 
 declare const chrome: {
@@ -15,56 +16,64 @@ declare const chrome: {
 	};
 };
 
+type ResetMessage = { type: typeof MESSAGE_TYPE.RESET; tabId?: number; events?: object[] };
+type EventMessage = { type: typeof MESSAGE_TYPE.EVENT; tabId?: number; payload?: object };
+type PortMessage = ResetMessage | EventMessage;
+
+function isPortMessage(message: unknown): message is PortMessage {
+	if (typeof message !== "object" || message === null || !("type" in message)) return false;
+	return message.type === MESSAGE_TYPE.RESET || message.type === MESSAGE_TYPE.EVENT;
+}
+
 const entries = new Signal<Entry[]>([]);
 let currentTabId: number | null = null;
 
-const onClear = () => {
-	entries.value = [];
-	panel.log.innerHTML = "";
-	filter.reset();
-};
-
-const panel = new Panel({ onClear });
+const panel = new Panel({ onClear: clearAll });
 document.body.append(panel.el);
 
 const filter = new Filter({ input: panel.filterInput, count: panel.countEl, entries });
 
-function onPortMessage(msg: unknown): void {
-	const m = msg as {
-		type: string;
-		tabId?: number;
-		payload?: object;
-		events?: object[];
-	};
-
-	if (m.type === "layr:reset") {
-		currentTabId = m.tabId ?? null;
-		entries.value = [];
-		panel.log.innerHTML = "";
-		filter.reset();
-		for (const payload of m.events ?? []) appendEntry(payload);
-		return;
-	}
-
-	if (m.type === "layr:event" && m.tabId === currentTabId && m.payload) {
-		appendEntry(m.payload);
-	}
-}
-
-function connect(): void {
-	const port = chrome.runtime.connect({ name: "layr:panel" });
-	port.onMessage.addListener(onPortMessage);
-	port.onDisconnect.addListener(() => connect());
-}
-
 connect();
+
+function clearLog(): void {
+	entries.value = [];
+	panel.log.innerHTML = "";
+}
+
+function clearAll(): void {
+	clearLog();
+	filter.reset();
+}
 
 function appendEntry(raw: object): void {
 	const entry = new Entry({ order: entries.value.length + 1, raw });
 	entries.value = [...entries.value, entry];
 	panel.log.append(entry.el);
+
 	const { scrollTop, scrollHeight, clientHeight } = panel.log;
-	if (scrollHeight - scrollTop - clientHeight < 50) {
-		panel.log.scrollTop = scrollHeight;
-	}
+	const isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
+	if (isScrolledToBottom) panel.log.scrollTop = scrollHeight;
+}
+
+function handleReset(message: ResetMessage): void {
+	currentTabId = message.tabId ?? null;
+	clearLog();
+	if (currentTabId !== null) filter.loadForTab(currentTabId);
+	for (const payload of message.events ?? []) appendEntry(payload);
+}
+
+function handleEvent(message: EventMessage): void {
+	if (message.tabId === currentTabId && message.payload) appendEntry(message.payload);
+}
+
+function onPortMessage(message: unknown): void {
+	if (!isPortMessage(message)) return;
+	if (message.type === MESSAGE_TYPE.RESET) handleReset(message);
+	else handleEvent(message);
+}
+
+function connect(): void {
+	const port = chrome.runtime.connect({ name: PANEL_PORT_NAME });
+	port.onMessage.addListener(onPortMessage);
+	port.onDisconnect.addListener(connect);
 }

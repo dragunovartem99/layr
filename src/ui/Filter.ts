@@ -14,6 +14,7 @@ export class Filter {
 	#input: HTMLInputElement;
 	#count: HTMLElement;
 	#entries: Signal<Entry[]>;
+	#tabId: number | null = null;
 
 	constructor({ input, count, entries }: FilterOptions) {
 		this.#input = input;
@@ -22,18 +23,12 @@ export class Filter {
 
 		this.query = new Signal("");
 
-		const saved = getFilterQuery();
-		if (saved) {
-			this.#input.value = saved;
-			this.query.value = saved;
-		}
-
 		let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 		this.#input.addEventListener("input", () => {
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				this.query.value = this.#input.value;
-				setFilterQuery({ query: this.#input.value });
+				if (this.#tabId !== null) setFilterQuery({ tabId: this.#tabId, query: this.#input.value });
 			}, 300);
 		});
 
@@ -41,10 +36,18 @@ export class Filter {
 		this.query.subscribe(() => this.#applyAndCount());
 	}
 
+	// Switches the filter to the given tab, restoring whatever query was last saved for it.
+	loadForTab(tabId: number): void {
+		this.#tabId = tabId;
+		const saved = getFilterQuery(tabId) ?? "";
+		this.#input.value = saved;
+		this.query.value = saved;
+	}
+
 	reset(): void {
 		this.#input.value = "";
 		this.query.value = "";
-		clearFilterQuery();
+		if (this.#tabId !== null) clearFilterQuery(this.#tabId);
 		this.#applyAndCount();
 	}
 
