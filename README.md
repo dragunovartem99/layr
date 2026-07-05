@@ -14,4 +14,4 @@ Features:
 
 No data ever leaves the browser. No network requests, no tracking.
 
-<img width="640" height="400" alt="Screenshot of Layr extension" src="https://github.com/user-attachments/assets/334ebe34-f1c6-4361-81ae-bb0d5ed599fd" />
+<img width="640" height="400" alt="Screenshot of Layr extension" src="https://github.com/user-attachments/assets/32eb4321-a13b-4e33-afd0-e1c91208ea9e" />
