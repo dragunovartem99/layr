@@ -1,7 +1,7 @@
 {
 	"name": "layr",
 	"private": true,
-	"description": "dataLayer inspector",
+	"description": "Lightweight dataLayer inspector for developers and analytics engineers",
 	"keywords": [],
 	"homepage": "https://github.com/dragunovartem99/layr#readme",
 	"bugs": {
