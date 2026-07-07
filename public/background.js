@@ -2,6 +2,8 @@ const MESSAGE_TYPE = {
 	RESET: "layr:reset",
 	EVENT: "layr:event",
 	CLOSE: "layr:close",
+	CLEAR: "layr:clear",
+	NAVIGATE: "layr:navigate",
 };
 const PANEL_PORT_NAME = "layr:panel";
 
@@ -39,10 +41,23 @@ function pushReset(port, tabId) {
 	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events });
 }
 
+function clearBuffer(tabId) {
+	buffers.set(tabId, []);
+	persistBuffers();
+	for (const port of panels) pushReset(port, tabId);
+}
+
 chrome.runtime.onMessage.addListener((msg, sender) => {
-	if (msg.type !== MESSAGE_TYPE.EVENT) return;
 	const tabId = sender.tab?.id;
 	if (tabId === undefined) return;
+
+	// Sent by the MAIN-world content script at document_start, which only runs on a
+	// full (re)load, so a stale buffer never survives F5.
+	if (msg.type === MESSAGE_TYPE.NAVIGATE) {
+		void ready.then(() => clearBuffer(tabId));
+		return;
+	}
+	if (msg.type !== MESSAGE_TYPE.EVENT) return;
 
 	void (async () => {
 		await ready;
@@ -62,6 +77,11 @@ chrome.runtime.onConnect.addListener((port) => {
 	if (port.name !== PANEL_PORT_NAME) return;
 	panels.add(port);
 	port.onDisconnect.addListener(() => panels.delete(port));
+	port.onMessage.addListener((msg) => {
+		if (msg?.type === MESSAGE_TYPE.CLEAR && typeof msg.tabId === "number") {
+			void ready.then(() => clearBuffer(msg.tabId));
+		}
+	});
 
 	void (async () => {
 		await ready;

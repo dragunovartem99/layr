@@ -32,6 +32,7 @@ function isPortMessage(message: unknown): message is PortMessage {
 
 const entries = new Signal<Entry[]>([]);
 let currentTabId: number | null = null;
+let currentPort: ChromePort | null = null;
 
 const panel = new Panel({ onClear: clearAll });
 document.body.append(panel.el);
@@ -48,6 +49,8 @@ function clearLog(): void {
 function clearAll(): void {
 	clearLog();
 	filter.reset();
+	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- chrome.runtime.Port, not window
+	if (currentTabId !== null) currentPort?.postMessage({ type: MESSAGE_TYPE.CLEAR, tabId: currentTabId });
 }
 
 function appendEntry(raw: object): void {
@@ -85,6 +88,10 @@ function onPortMessage(message: unknown): void {
 
 function connect(): void {
 	const port = chrome.runtime.connect({ name: PANEL_PORT_NAME });
+	currentPort = port;
 	port.onMessage.addListener(onPortMessage);
-	port.onDisconnect.addListener(connect);
+	port.onDisconnect.addListener(() => {
+		if (currentPort === port) currentPort = null;
+		connect();
+	});
 }

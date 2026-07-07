@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Layr",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Lightweight dataLayer inspector for developers and analytics engineers",
 	"permissions": ["sidePanel", "storage"],
 	"side_panel": {
