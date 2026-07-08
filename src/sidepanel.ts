@@ -1,4 +1,5 @@
-import { Signal } from "./lib/Signal.ts";
+import { LogEvent } from "./core/LogEvent.ts";
+import { Signal } from "./core/Signal.ts";
 import { MESSAGE_TYPE, PANEL_PORT_NAME, isPanelInMessage } from "./protocol/messages.ts";
 import type { PanelInMessage, PanelOutMessage } from "./protocol/messages.ts";
 import { Entry } from "./ui/Entry.ts";
@@ -46,7 +47,7 @@ function clearAll(): void {
 }
 
 function appendEntry(raw: object): void {
-	const entry = new Entry({ order: entries.value.length + 1, raw });
+	const entry = new Entry(new LogEvent({ order: entries.value.length + 1, raw }));
 	entries.value = [...entries.value, entry];
 	panel.log.append(entry.el);
 

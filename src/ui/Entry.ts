@@ -1,46 +1,31 @@
-import { expandJsonStrings } from "../lib/expandJson.ts";
-import { highlight } from "../lib/highlight.ts";
+import type { LogEvent } from "../core/LogEvent.ts";
+import { highlight } from "./highlight.ts";
 import { entryHtml } from "./html.ts";
-
-const pad = (n: number, len = 2) => String(n).padStart(len, "0");
-
-function timestamp(): string {
-	const d = new Date();
-	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
-}
-
-type EntryOptions = { order: number; raw: object };
 
 export class Entry {
 	readonly el: HTMLLIElement;
-	readonly rawJson: string;
+	readonly model: LogEvent;
 
-	#eventName: string;
-	#formattedJson: string;
 	#eventEl: HTMLElement;
 	#codeEl: HTMLElement;
-	#rawJsonLower: string;
 	#lastQuery: string | undefined;
 
-	constructor({ order, raw }: EntryOptions) {
-		this.rawJson = JSON.stringify(raw);
-		this.#rawJsonLower = this.rawJson.toLowerCase();
-		this.#eventName = ((raw as Record<string, unknown>).event as string) ?? "(anonymous)";
-		this.#formattedJson = JSON.stringify(expandJsonStrings({ value: raw }), null, 2);
+	constructor(model: LogEvent) {
+		this.model = model;
 
 		this.el = document.createElement("li");
 		this.el.className = "layr__entry";
-		this.el.innerHTML = entryHtml({ order, time: timestamp() });
+		this.el.innerHTML = entryHtml({ order: model.order, time: model.timestamp });
 
 		this.#eventEl = this.el.querySelector(".layr__event")!;
 		this.#codeEl = this.el.querySelector("code")!;
-		this.#eventEl.textContent = this.#eventName;
-		this.#codeEl.textContent = this.#formattedJson;
+		this.#eventEl.textContent = model.eventName;
+		this.#codeEl.textContent = model.formattedJSON;
 
 		const copyBtn = this.el.querySelector(".layr__btn--copy")! as HTMLButtonElement;
 		copyBtn.addEventListener("click", async (e) => {
 			e.stopPropagation();
-			await navigator.clipboard.writeText(this.#formattedJson);
+			await navigator.clipboard.writeText(model.formattedJSON);
 			copyBtn.textContent = "Copied!";
 			setTimeout(() => {
 				copyBtn.textContent = "Copy";
@@ -54,15 +39,15 @@ export class Entry {
 
 		if (!query) {
 			this.el.hidden = false;
-			this.#eventEl.textContent = this.#eventName;
-			this.#codeEl.textContent = this.#formattedJson;
+			this.#eventEl.textContent = this.model.eventName;
+			this.#codeEl.textContent = this.model.formattedJSON;
 			return true;
 		}
-		const matches = this.#rawJsonLower.includes(query.toLowerCase());
+		const matches = this.model.matches(query);
 		this.el.hidden = !matches;
 		if (matches) {
-			this.#eventEl.innerHTML = highlight({ text: this.#eventName, query });
-			this.#codeEl.innerHTML = highlight({ text: this.#formattedJson, query });
+			this.#eventEl.innerHTML = highlight({ text: this.model.eventName, query });
+			this.#codeEl.innerHTML = highlight({ text: this.model.formattedJSON, query });
 		}
 		return matches;
 	}

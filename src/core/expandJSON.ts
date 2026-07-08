@@ -1,4 +1,4 @@
-export function expandJsonStrings({ value }: { value: unknown }): unknown {
+export function expandJSONStrings({ value }: { value: unknown }): unknown {
 	return expand(value);
 }
 

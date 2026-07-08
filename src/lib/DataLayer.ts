@@ -1,4 +1,4 @@
-import { Signal } from "./Signal.ts";
+import { Signal } from "../core/Signal.ts";
 
 declare global {
 	interface Window {

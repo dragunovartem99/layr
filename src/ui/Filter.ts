@@ -1,4 +1,4 @@
-import { Signal } from "../lib/Signal.ts";
+import { Signal } from "../core/Signal.ts";
 import { getFilterQuery, setFilterQuery, clearFilterQuery } from "../lib/storage.ts";
 import type { Entry } from "./Entry.ts";
 

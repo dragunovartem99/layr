@@ -1,3 +1,5 @@
+import { EventBuffer } from "./core/EventBuffer.ts";
+import type { BufferSnapshot } from "./core/EventBuffer.ts";
 import {
 	MESSAGE_TYPE,
 	PANEL_PORT_NAME,
@@ -6,27 +8,23 @@ import {
 } from "./protocol/messages.ts";
 import type { PanelInMessage } from "./protocol/messages.ts";
 
-const buffers = new Map<number, object[]>();
-const MAX_BUFFER = 500;
+const buffer = new EventBuffer();
 /** Panels never learn which window/tab they belong to here — each panel tracks
  * its own active tab and asks for exactly the buffer it wants, so a tab opening
  * or activating anywhere can never reset a panel that isn't looking at it. */
 const panels = new Set<chrome.runtime.Port>();
 
-/** The service worker is unloaded after ~30s idle, so `buffers` is persisted to
- * session storage and rehydrated here to survive restarts. Chrome does not
+/** The service worker is unloaded after ~30s idle, so the buffer is persisted
+ * to session storage and rehydrated here to survive restarts. Chrome does not
  * support top-level await in service workers, so this stays an async IIFE. */
 // oxlint-disable-next-line unicorn/prefer-top-level-await
 const ready = (async () => {
 	const data = await chrome.storage.session.get("buffers");
-	const stored = (data.buffers ?? {}) as Record<string, object[]>;
-	for (const [tabId, events] of Object.entries(stored)) {
-		buffers.set(Number(tabId), events);
-	}
+	buffer.restore((data.buffers ?? {}) as BufferSnapshot);
 })();
 
 function persistBuffers(): void {
-	void chrome.storage.session.set({ buffers: Object.fromEntries(buffers) });
+	void chrome.storage.session.set({ buffers: buffer.toJSON() });
 }
 
 function sendToPanel(port: chrome.runtime.Port, msg: PanelInMessage): void {
@@ -38,15 +36,14 @@ function sendToPanel(port: chrome.runtime.Port, msg: PanelInMessage): void {
 }
 
 function pushReset(port: chrome.runtime.Port, tabId: number): void {
-	const events = buffers.get(tabId) ?? [];
-	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events });
+	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events: buffer.get(tabId) });
 }
 
 // Broadcasts the (now empty) buffer to every panel. Each panel only applies a
 // RESET for the tab it's currently showing, so this is a no-op for panels on
 // other tabs/windows.
 function clearBuffer(tabId: number): void {
-	buffers.set(tabId, []);
+	buffer.clear(tabId);
 	persistBuffers();
 	for (const port of panels) pushReset(port, tabId);
 }
@@ -67,10 +64,7 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
 	const payload = msg.payload ?? {};
 	void (async () => {
 		await ready;
-		const buf = buffers.get(tabId) ?? [];
-		buf.push(payload);
-		if (buf.length > MAX_BUFFER) buf.shift();
-		buffers.set(tabId, buf);
+		buffer.append({ tabId, payload });
 		persistBuffers();
 
 		for (const port of panels) {
@@ -106,7 +100,7 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
 	void (async () => {
 		await ready;
-		buffers.delete(tabId);
+		buffer.delete(tabId);
 		persistBuffers();
 	})();
 });
