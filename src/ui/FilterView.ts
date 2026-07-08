@@ -4,28 +4,27 @@ import type { Log } from "../core/Log.ts";
 const DEBOUNCE_MS = 300;
 
 type FilterViewOptions = {
-	input: HTMLInputElement;
-	count: HTMLElement;
 	log: Log;
 	filter: FilterState;
 };
 
 /** Binds the search input to FilterState and renders the visible/total count. */
 export class FilterView {
-	#input: HTMLInputElement;
-	#count: HTMLElement;
 	#log: Log;
 	#filter: FilterState;
+	#input!: HTMLInputElement;
+	#count!: HTMLElement;
 	#debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-	constructor({ input, count, log, filter }: FilterViewOptions) {
-		this.#input = input;
-		this.#count = count;
+	constructor({ log, filter }: FilterViewOptions) {
 		this.#log = log;
 		this.#filter = filter;
 	}
 
-	mount(): void {
+	mount(root: HTMLElement): void {
+		this.#input = root.querySelector(".layr__filter")!;
+		this.#count = root.querySelector(".layr__count")!;
+
 		this.#input.addEventListener("input", () => {
 			clearTimeout(this.#debounceTimer);
 			this.#debounceTimer = setTimeout(

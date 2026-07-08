@@ -29,7 +29,6 @@ const panel = new PanelView({
 		app.clearCurrentTab();
 	},
 });
-panel.mount();
-document.body.append(panel.el);
+panel.mount(document.body);
 
 await app.start();

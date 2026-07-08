@@ -42,19 +42,20 @@ compiled into all four bundles, with type guards at every boundary.
 Each layer imports only downward; `chrome` appears only in `platform/chrome/`
 and the entry points.
 
-| Layer           | Contents                                                                                |
-| --------------- | --------------------------------------------------------------------------------------- |
-| `src/protocol/` | Message contract shared by all contexts                                                 |
-| `src/core/`     | Pure logic: `Entry`, `Log`, `FilterState`, `EventBuffer`, `DataLayerObserver`, `Signal` |
-| `src/platform/` | Browser access behind interfaces: `chrome/` implementations, `mock/` test doubles       |
-| `src/app/`      | Orchestration: `BackgroundApp`, `PanelApp`, `PageApp`                                   |
-| `src/ui/`       | Views subscribing to core stores: `PanelView`, `EntryView`, `FilterView`                |
+| Layer           | Contents                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `src/protocol/` | Message contract shared by all contexts                                                          |
+| `src/core/`     | Pure logic: `Entry`, `Log`, `FilterState`, `EventBuffer`, `DataLayerObserver`, `Signal`          |
+| `src/platform/` | Browser access behind interfaces: `chrome/` implementations, `mock/` test doubles                |
+| `src/app/`      | Orchestration: `BackgroundApp`, `PanelApp`, `PageApp`                                            |
+| `src/ui/`       | Views subscribing to core stores: `PanelView`, `LogView`, `EntryView`, `FilterView`; `panel.css` |
 
 Conventions:
 
 - **Constructor assigns, `start()`/`mount()` wires.** No side effects in
   constructors; entries call `new App(platform).start()` synchronously so MV3
-  still sees listeners registered on worker startup.
+  still sees listeners registered on worker startup. Views build their DOM in
+  `mount(parent)`, never in the constructor.
 - **State flows one way.** Views subscribe to `Signal`-based stores and emit
   intents (`onClear`, `setQuery`); nothing outside `ui/` touches the DOM,
   nothing inside it mutates a store directly.
