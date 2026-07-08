@@ -1,18 +1,13 @@
-import { DataLayer } from "./lib/DataLayer.ts";
-import { PAGE_SOURCE } from "./protocol/messages.ts";
-import type { PageMessage } from "./protocol/messages.ts";
+import { PageApp } from "./app/PageApp.ts";
+import { DataLayerObserver } from "./core/DataLayerObserver.ts";
 
-const dataLayer = new DataLayer();
-
-function toCloneable(value: unknown): object | null {
-	try {
-		return JSON.parse(JSON.stringify(value, (_, v) => (v instanceof Node ? undefined : v)));
-	} catch {
-		return null;
+declare global {
+	interface Window {
+		dataLayer?: object[];
 	}
 }
 
-dataLayer.subscribe((raw) => {
-	const message: PageMessage = { source: PAGE_SOURCE, payload: toCloneable(raw) };
-	window.postMessage(message, "*");
-});
+new PageApp({
+	observer: new DataLayerObserver(window),
+	post: (message) => window.postMessage(message, "*"),
+}).start();
