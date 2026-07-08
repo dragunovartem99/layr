@@ -19,21 +19,25 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build": "tsc && vite build && vite build --config vite.panel.config.ts",
+		"build": "tsc && node scripts/build.ts",
 		"dev": "vite",
 		"format": "oxfmt --write",
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"types:check": "tsc --noEmit",
 		"zip:google": "npm run build && zip -r dist-google.zip dist"
 	},
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.1.0",
 		"@dragunovartem99/oxlint-config": "^2.0.0",
+		"@types/chrome": "^0.2.2",
+		"happy-dom": "^20.10.6",
 		"typescript": "~6.0.2",
-		"vite": "^8.1.0"
+		"vite": "^8.1.0",
+		"vitest": "^4.1.10"
 	},
 	"tags": [
 		"dataLayer",

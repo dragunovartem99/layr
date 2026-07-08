@@ -1,19 +1,17 @@
 import { Signal } from "./Signal.ts";
 
-declare global {
-	interface Window {
-		dataLayer?: object[];
-	}
-}
+export type DataLayerHost = { dataLayer?: object[] };
 
 const PATCHED = "__layrPatched__";
 
-export class DataLayer {
+/** Watches a dataLayer array by patching its push. The host is injectable
+ * (window in production) so the observer runs anywhere. */
+export class DataLayerObserver {
 	#item = new Signal<object | null>(null);
 	#existing: object[] = [];
 
-	constructor() {
-		const dl = (window.dataLayer ??= []);
+	constructor(host: DataLayerHost) {
+		const dl = (host.dataLayer ??= []);
 		this.#existing = [...dl];
 		if ((dl.push as unknown as Record<string, unknown>)[PATCHED]) return;
 		this.#patch(dl);

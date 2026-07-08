@@ -1,15 +1,13 @@
-import { DataLayer } from "./lib/DataLayer.ts";
+import { PageApp } from "./app/PageApp.ts";
+import { DataLayerObserver } from "./core/DataLayerObserver.ts";
 
-const dataLayer = new DataLayer();
-
-function toCloneable(value: unknown): unknown {
-	try {
-		return JSON.parse(JSON.stringify(value, (_, v) => (v instanceof Node ? undefined : v)));
-	} catch {
-		return null;
+declare global {
+	interface Window {
+		dataLayer?: object[];
 	}
 }
 
-dataLayer.subscribe((raw) => {
-	window.postMessage({ source: "layr", payload: toCloneable(raw) }, "*");
-});
+new PageApp({
+	observer: new DataLayerObserver(window),
+	post: (message) => window.postMessage(message, "*"),
+}).start();
