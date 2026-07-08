@@ -6,7 +6,7 @@ function formatTime(d: Date): string {
 	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
 }
 
-type LogEventOptions = {
+type EntryOptions = {
 	order: number;
 	raw: object;
 	receivedAt?: Date;
@@ -14,7 +14,7 @@ type LogEventOptions = {
 
 /** One received dataLayer push: naming, formatting, and query matching.
  * Rendering belongs to the UI layer. */
-export class LogEvent {
+export class Entry {
 	readonly order: number;
 	readonly raw: object;
 	readonly eventName: string;
@@ -23,7 +23,7 @@ export class LogEvent {
 
 	#rawJSONLower: string;
 
-	constructor({ order, raw, receivedAt = new Date() }: LogEventOptions) {
+	constructor({ order, raw, receivedAt = new Date() }: EntryOptions) {
 		this.order = order;
 		this.raw = raw;
 		this.eventName = ((raw as Record<string, unknown>).event as string) ?? "(anonymous)";

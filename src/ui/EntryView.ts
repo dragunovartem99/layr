@@ -1,16 +1,18 @@
-import type { LogEvent } from "../core/LogEvent.ts";
+import type { Entry } from "../core/Entry.ts";
 import { highlight } from "./highlight.ts";
 import { entryHtml } from "./html.ts";
 
-export class Entry {
+/** Renders one Entry as a collapsible row. `update` applies the filter query:
+ * hides the row on a miss, highlights matches otherwise. */
+export class EntryView {
 	readonly el: HTMLLIElement;
-	readonly model: LogEvent;
+	readonly model: Entry;
 
 	#eventEl: HTMLElement;
 	#codeEl: HTMLElement;
 	#lastQuery: string | undefined;
 
-	constructor(model: LogEvent) {
+	constructor(model: Entry) {
 		this.model = model;
 
 		this.el = document.createElement("li");
@@ -22,26 +24,18 @@ export class Entry {
 		this.#eventEl.textContent = model.eventName;
 		this.#codeEl.textContent = model.formattedJSON;
 
-		const copyBtn = this.el.querySelector(".layr__btn--copy")! as HTMLButtonElement;
-		copyBtn.addEventListener("click", async (e) => {
-			e.stopPropagation();
-			await navigator.clipboard.writeText(model.formattedJSON);
-			copyBtn.textContent = "Copied!";
-			setTimeout(() => {
-				copyBtn.textContent = "Copy";
-			}, 1500);
-		});
+		this.#bindCopyButton();
 	}
 
-	applyFilter(query: string): boolean {
-		if (query === this.#lastQuery) return !this.el.hidden;
+	update(query: string): void {
+		if (query === this.#lastQuery) return;
 		this.#lastQuery = query;
 
 		if (!query) {
 			this.el.hidden = false;
 			this.#eventEl.textContent = this.model.eventName;
 			this.#codeEl.textContent = this.model.formattedJSON;
-			return true;
+			return;
 		}
 		const matches = this.model.matches(query);
 		this.el.hidden = !matches;
@@ -49,6 +43,17 @@ export class Entry {
 			this.#eventEl.innerHTML = highlight({ text: this.model.eventName, query });
 			this.#codeEl.innerHTML = highlight({ text: this.model.formattedJSON, query });
 		}
-		return matches;
+	}
+
+	#bindCopyButton(): void {
+		const copyBtn = this.el.querySelector(".layr__btn--copy")! as HTMLButtonElement;
+		copyBtn.addEventListener("click", async (e) => {
+			e.stopPropagation();
+			await navigator.clipboard.writeText(this.model.formattedJSON);
+			copyBtn.textContent = "Copied!";
+			setTimeout(() => {
+				copyBtn.textContent = "Copy";
+			}, 1500);
+		});
 	}
 }
