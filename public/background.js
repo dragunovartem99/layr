@@ -4,13 +4,17 @@ const MESSAGE_TYPE = {
 	CLOSE: "layr:close",
 	CLEAR: "layr:clear",
 	NAVIGATE: "layr:navigate",
+	REQUEST: "layr:request",
 };
 const PANEL_PORT_NAME = "layr:panel";
 
 /** @type {Map<number, object[]>} */
 const buffers = new Map();
 const MAX_BUFFER = 500;
-/** @type {Set<chrome.runtime.Port>} */
+/** Panels never learn which window/tab they belong to here — each panel tracks
+ * its own active tab and asks for exactly the buffer it wants, so a tab opening
+ * or activating anywhere can never reset a panel that isn't looking at it.
+ * @type {Set<chrome.runtime.Port>} */
 const panels = new Set();
 
 /** The service worker is unloaded after ~30s idle, so `buffers` is persisted to
@@ -41,6 +45,9 @@ function pushReset(port, tabId) {
 	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events });
 }
 
+// Broadcasts the (now empty) buffer to every panel. Each panel only applies a
+// RESET for the tab it's currently showing, so this is a no-op for panels on
+// other tabs/windows.
 function clearBuffer(tabId) {
 	buffers.set(tabId, []);
 	persistBuffers();
@@ -78,23 +85,13 @@ chrome.runtime.onConnect.addListener((port) => {
 	panels.add(port);
 	port.onDisconnect.addListener(() => panels.delete(port));
 	port.onMessage.addListener((msg) => {
+		if (msg?.type === MESSAGE_TYPE.REQUEST && typeof msg.tabId === "number") {
+			void ready.then(() => pushReset(port, msg.tabId));
+		}
 		if (msg?.type === MESSAGE_TYPE.CLEAR && typeof msg.tabId === "number") {
 			void ready.then(() => clearBuffer(msg.tabId));
 		}
 	});
-
-	void (async () => {
-		await ready;
-		const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-		if (tab?.id !== undefined) pushReset(port, tab.id);
-	})();
-});
-
-chrome.tabs.onActivated.addListener(({ tabId }) => {
-	void (async () => {
-		await ready;
-		for (const port of panels) pushReset(port, tabId);
-	})();
 });
 
 chrome.action.onClicked.addListener((tab) => {

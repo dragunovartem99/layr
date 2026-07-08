@@ -28,7 +28,8 @@ export class Filter {
 			clearTimeout(debounceTimer);
 			debounceTimer = setTimeout(() => {
 				this.query.value = this.#input.value;
-				if (this.#tabId !== null) setFilterQuery({ tabId: this.#tabId, query: this.#input.value });
+				if (this.#tabId !== null)
+					setFilterQuery({ tabId: this.#tabId, query: this.#input.value });
 			}, 300);
 		});
 
