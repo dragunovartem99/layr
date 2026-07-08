@@ -1,5 +1,6 @@
 import { LogEvent } from "./core/LogEvent.ts";
 import { Signal } from "./core/Signal.ts";
+import { LocalStorageStore } from "./platform/chrome/LocalStorageStore.ts";
 import { MESSAGE_TYPE, PANEL_PORT_NAME, isPanelInMessage } from "./protocol/messages.ts";
 import type { PanelInMessage, PanelOutMessage } from "./protocol/messages.ts";
 import { Entry } from "./ui/Entry.ts";
@@ -19,7 +20,12 @@ let currentPort: chrome.runtime.Port | null = null;
 const panel = new Panel({ onClear: clearAll });
 document.body.append(panel.el);
 
-const filter = new Filter({ input: panel.filterInput, count: panel.countEl, entries });
+const filter = new Filter({
+	input: panel.filterInput,
+	count: panel.countEl,
+	entries,
+	store: new LocalStorageStore(),
+});
 
 const { id: windowId } = await chrome.windows.getCurrent();
 if (windowId !== undefined) {
