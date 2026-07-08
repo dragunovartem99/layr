@@ -1,21 +1,17 @@
-const MESSAGE_TYPE = {
-	RESET: "layr:reset",
-	EVENT: "layr:event",
-	CLOSE: "layr:close",
-	CLEAR: "layr:clear",
-	NAVIGATE: "layr:navigate",
-	REQUEST: "layr:request",
-};
-const PANEL_PORT_NAME = "layr:panel";
+import {
+	MESSAGE_TYPE,
+	PANEL_PORT_NAME,
+	isContentMessage,
+	isPanelOutMessage,
+} from "./protocol/messages.ts";
+import type { PanelInMessage } from "./protocol/messages.ts";
 
-/** @type {Map<number, object[]>} */
-const buffers = new Map();
+const buffers = new Map<number, object[]>();
 const MAX_BUFFER = 500;
 /** Panels never learn which window/tab they belong to here — each panel tracks
  * its own active tab and asks for exactly the buffer it wants, so a tab opening
- * or activating anywhere can never reset a panel that isn't looking at it.
- * @type {Set<chrome.runtime.Port>} */
-const panels = new Set();
+ * or activating anywhere can never reset a panel that isn't looking at it. */
+const panels = new Set<chrome.runtime.Port>();
 
 /** The service worker is unloaded after ~30s idle, so `buffers` is persisted to
  * session storage and rehydrated here to survive restarts. Chrome does not
@@ -23,16 +19,17 @@ const panels = new Set();
 // oxlint-disable-next-line unicorn/prefer-top-level-await
 const ready = (async () => {
 	const data = await chrome.storage.session.get("buffers");
-	for (const [tabId, events] of Object.entries(data.buffers ?? {})) {
+	const stored = (data.buffers ?? {}) as Record<string, object[]>;
+	for (const [tabId, events] of Object.entries(stored)) {
 		buffers.set(Number(tabId), events);
 	}
 })();
 
-function persistBuffers() {
+function persistBuffers(): void {
 	void chrome.storage.session.set({ buffers: Object.fromEntries(buffers) });
 }
 
-function sendToPanel(port, msg) {
+function sendToPanel(port: chrome.runtime.Port, msg: PanelInMessage): void {
 	try {
 		port.postMessage(msg);
 	} catch {
@@ -40,7 +37,7 @@ function sendToPanel(port, msg) {
 	}
 }
 
-function pushReset(port, tabId) {
+function pushReset(port: chrome.runtime.Port, tabId: number): void {
 	const events = buffers.get(tabId) ?? [];
 	sendToPanel(port, { type: MESSAGE_TYPE.RESET, tabId, events });
 }
@@ -48,15 +45,15 @@ function pushReset(port, tabId) {
 // Broadcasts the (now empty) buffer to every panel. Each panel only applies a
 // RESET for the tab it's currently showing, so this is a no-op for panels on
 // other tabs/windows.
-function clearBuffer(tabId) {
+function clearBuffer(tabId: number): void {
 	buffers.set(tabId, []);
 	persistBuffers();
 	for (const port of panels) pushReset(port, tabId);
 }
 
-chrome.runtime.onMessage.addListener((msg, sender) => {
+chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
 	const tabId = sender.tab?.id;
-	if (tabId === undefined) return;
+	if (tabId === undefined || !isContentMessage(msg)) return;
 
 	// Sent by the MAIN-world content script at document_start, which only runs on a
 	// full (re)load, so a stale buffer never survives F5.
@@ -64,18 +61,20 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 		void ready.then(() => clearBuffer(tabId));
 		return;
 	}
-	if (msg.type !== MESSAGE_TYPE.EVENT) return;
 
+	// A payload the page failed to serialize arrives as null; normalized to {}
+	// so the buffered copy and the live broadcast stay identical.
+	const payload = msg.payload ?? {};
 	void (async () => {
 		await ready;
 		const buf = buffers.get(tabId) ?? [];
-		buf.push(msg.payload);
+		buf.push(payload);
 		if (buf.length > MAX_BUFFER) buf.shift();
 		buffers.set(tabId, buf);
 		persistBuffers();
 
 		for (const port of panels) {
-			sendToPanel(port, { type: MESSAGE_TYPE.EVENT, tabId, payload: msg.payload });
+			sendToPanel(port, { type: MESSAGE_TYPE.EVENT, tabId, payload });
 		}
 	})();
 });
@@ -84,11 +83,12 @@ chrome.runtime.onConnect.addListener((port) => {
 	if (port.name !== PANEL_PORT_NAME) return;
 	panels.add(port);
 	port.onDisconnect.addListener(() => panels.delete(port));
-	port.onMessage.addListener((msg) => {
-		if (msg?.type === MESSAGE_TYPE.REQUEST && typeof msg.tabId === "number") {
+	port.onMessage.addListener((msg: unknown) => {
+		if (!isPanelOutMessage(msg)) return;
+		if (msg.type === MESSAGE_TYPE.REQUEST) {
 			void ready.then(() => pushReset(port, msg.tabId));
 		}
-		if (msg?.type === MESSAGE_TYPE.CLEAR && typeof msg.tabId === "number") {
+		if (msg.type === MESSAGE_TYPE.CLEAR) {
 			void ready.then(() => clearBuffer(msg.tabId));
 		}
 	});
@@ -100,7 +100,7 @@ chrome.action.onClicked.addListener((tab) => {
 		for (const port of panels) sendToPanel(port, { type: MESSAGE_TYPE.CLOSE });
 		return;
 	}
-	chrome.sidePanel.open({ tabId: tab.id });
+	void chrome.sidePanel.open({ tabId: tab.id });
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {

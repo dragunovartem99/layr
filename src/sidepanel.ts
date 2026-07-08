@@ -1,50 +1,19 @@
-import { MESSAGE_TYPE, PANEL_PORT_NAME } from "./lib/messages.ts";
 import { Signal } from "./lib/Signal.ts";
+import { MESSAGE_TYPE, PANEL_PORT_NAME, isPanelInMessage } from "./protocol/messages.ts";
+import type { PanelInMessage, PanelOutMessage } from "./protocol/messages.ts";
 import { Entry } from "./ui/Entry.ts";
 import { Filter } from "./ui/Filter.ts";
 import { Panel } from "./ui/Panel.ts";
 
-type ChromePort = {
-	postMessage(message: unknown): void;
-	onMessage: { addListener(listener: (message: unknown) => void): void };
-	onDisconnect: { addListener(listener: () => void): void };
-};
-
-declare const chrome: {
-	runtime: {
-		connect(info: { name: string }): ChromePort;
-	};
-	windows: {
-		getCurrent(): Promise<{ id?: number }>;
-	};
-	tabs: {
-		query(query: { active: boolean; windowId: number }): Promise<{ id?: number }[]>;
-		onActivated: {
-			addListener(listener: (info: { tabId: number; windowId: number }) => void): void;
-		};
-	};
-};
-
-type ResetMessage = { type: typeof MESSAGE_TYPE.RESET; tabId?: number; events?: object[] };
-type EventMessage = { type: typeof MESSAGE_TYPE.EVENT; tabId?: number; payload?: object };
-type CloseMessage = { type: typeof MESSAGE_TYPE.CLOSE };
-type PortMessage = ResetMessage | EventMessage | CloseMessage;
-
-function isPortMessage(message: unknown): message is PortMessage {
-	if (typeof message !== "object" || message === null || !("type" in message)) return false;
-	return (
-		message.type === MESSAGE_TYPE.RESET ||
-		message.type === MESSAGE_TYPE.EVENT ||
-		message.type === MESSAGE_TYPE.CLOSE
-	);
-}
+type ResetMessage = Extract<PanelInMessage, { type: typeof MESSAGE_TYPE.RESET }>;
+type EventMessage = Extract<PanelInMessage, { type: typeof MESSAGE_TYPE.EVENT }>;
 
 const entries = new Signal<Entry[]>([]);
 // The tab this panel is currently displaying. Owned entirely client-side: this
 // panel's window is queried directly via chrome.tabs, so tab activity in other
 // windows can never affect it, and any message whose tabId doesn't match is ignored.
 let currentTabId: number | null = null;
-let currentPort: ChromePort | null = null;
+let currentPort: chrome.runtime.Port | null = null;
 
 const panel = new Panel({ onClear: clearAll });
 document.body.append(panel.el);
@@ -60,6 +29,11 @@ if (windowId !== undefined) {
 connect();
 await syncActiveTab();
 
+function send(message: PanelOutMessage): void {
+	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- chrome.runtime.Port, not window
+	currentPort?.postMessage(message);
+}
+
 function clearLog(): void {
 	entries.value = [];
 	panel.log.innerHTML = "";
@@ -68,9 +42,7 @@ function clearLog(): void {
 function clearAll(): void {
 	clearLog();
 	filter.reset();
-	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- chrome.runtime.Port, not window
-	if (currentTabId !== null)
-		currentPort?.postMessage({ type: MESSAGE_TYPE.CLEAR, tabId: currentTabId });
+	if (currentTabId !== null) send({ type: MESSAGE_TYPE.CLEAR, tabId: currentTabId });
 }
 
 function appendEntry(raw: object): void {
@@ -89,7 +61,7 @@ function appendEntry(raw: object): void {
 function handleReset(message: ResetMessage): void {
 	if (message.tabId !== currentTabId) return;
 	clearLog();
-	for (const payload of message.events ?? []) appendEntry(payload);
+	for (const payload of message.events) appendEntry(payload);
 }
 
 function handleEvent(message: EventMessage): void {
@@ -97,7 +69,7 @@ function handleEvent(message: EventMessage): void {
 }
 
 function onPortMessage(message: unknown): void {
-	if (!isPortMessage(message)) return;
+	if (!isPanelInMessage(message)) return;
 	switch (message.type) {
 		case MESSAGE_TYPE.RESET:
 			return handleReset(message);
@@ -117,9 +89,7 @@ function connect(): void {
 		connect();
 		// The background worker may have restarted, so re-request the current
 		// tab's buffer over the fresh port.
-		// oxlint-disable-next-line unicorn/require-post-message-target-origin -- chrome.runtime.Port, not window
-		if (currentTabId !== null)
-			currentPort?.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId: currentTabId });
+		if (currentTabId !== null) send({ type: MESSAGE_TYPE.REQUEST, tabId: currentTabId });
 	});
 }
 
@@ -134,6 +104,5 @@ async function syncActiveTab(): Promise<void> {
 	clearLog();
 	if (tabId === null) return;
 	filter.loadForTab(tabId);
-	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- chrome.runtime.Port, not window
-	currentPort?.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId });
+	send({ type: MESSAGE_TYPE.REQUEST, tabId });
 }
