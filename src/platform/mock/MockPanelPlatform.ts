@@ -6,7 +6,7 @@ import { MockSyncKeyValueStore } from "./MockSyncKeyValueStore.ts";
  * MockPort pair; the background end is handed to onConnect so a test can wire
  * it to a real BackgroundApp (or keep it to script the other side). */
 export class MockPanelPlatform implements PanelPlatform {
-	readonly filterStore = new MockSyncKeyValueStore();
+	readonly store = new MockSyncKeyValueStore();
 
 	activeTabId: number | null = null;
 	closed = false;

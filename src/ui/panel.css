@@ -18,7 +18,7 @@ body {
 		-apple-system,
 		"Segoe UI",
 		sans-serif;
-	font-size: 14px;
+	font-size: calc(var(--layr-font-base, 14px) * var(--layr-font-scale, 1));
 	line-height: 1.5;
 	display: flex;
 	flex-direction: column;
@@ -27,8 +27,8 @@ body {
 .layr__toolbar {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
+	gap: 0.5em;
+	padding: 0.5em 0.75em;
 	background: #282a2e;
 	border-bottom: 1px solid #373b41;
 	user-select: none;
@@ -41,9 +41,9 @@ body {
 	color: #e2e4e3;
 	border: 1px solid #373b41;
 	border-radius: 5px;
-	padding: 3px 8px;
+	padding: 0.25em 0.5em;
 	font: inherit;
-	font-size: 13px;
+	font-size: 0.9em;
 	outline: none;
 }
 .layr__filter:focus {
@@ -53,7 +53,7 @@ body {
 	color: #4d5057;
 }
 .layr__count {
-	font-size: 12px;
+	font-size: 0.85em;
 	color: #c5c8c6;
 	white-space: nowrap;
 	flex-shrink: 0;
@@ -63,18 +63,72 @@ body {
 	color: #969896;
 	border: 1px solid #373b41;
 	border-radius: 5px;
-	padding: 3px 9px;
+	padding: 0.25em 0.75em;
 	font: inherit;
-	font-size: 12px;
+	font-size: 0.85em;
 	cursor: pointer;
 	flex-shrink: 0;
 	line-height: 1.5;
 	white-space: nowrap;
 }
-.layr__btn:hover {
+.layr__btn:hover:not(:disabled) {
 	background: #373b41;
 	color: #c5c8c6;
 	border-color: #4d5057;
+}
+.layr__btn--icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.25em;
+}
+.layr__icon {
+	width: 1.15em;
+	height: 1.15em;
+	display: block;
+}
+.layr__btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.layr__btn--settings[aria-expanded="true"] {
+	background: #373b41;
+	color: #c5c8c6;
+	border-color: #4d5057;
+}
+.layr__settings {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+	padding: 0.5em 0.75em;
+	background: #282a2e;
+	border-bottom: 1px solid #373b41;
+	user-select: none;
+	flex-shrink: 0;
+}
+.layr__settings[hidden] {
+	display: none;
+}
+.layr__setting {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5em;
+}
+.layr__setting-label {
+	font-size: 0.85em;
+	color: #c5c8c6;
+}
+.layr__setting-control {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+.layr__setting-value {
+	font-size: 0.85em;
+	color: #969896;
+	min-width: 3em;
+	text-align: center;
 }
 .layr__log {
 	flex: 1;
@@ -102,8 +156,8 @@ body {
 .layr__summary {
 	display: flex;
 	align-items: baseline;
-	gap: 7px;
-	padding: 6px 10px;
+	gap: 0.5em;
+	padding: 0.5em 0.75em;
 	cursor: pointer;
 	list-style: none;
 	user-select: none;
@@ -120,8 +174,8 @@ body {
 }
 .layr__order {
 	color: #969896;
-	font-size: 12px;
-	min-width: 20px;
+	font-size: 0.85em;
+	min-width: 1.5em;
 	text-align: right;
 	flex-shrink: 0;
 }
@@ -134,23 +188,23 @@ body {
 }
 .layr__time {
 	color: #969896;
-	font-size: 12px;
+	font-size: 0.85em;
 	white-space: nowrap;
 	flex-shrink: 0;
 }
 .layr__body {
-	padding: 0 10px 8px;
+	padding: 0 0.75em 0.5em;
 	position: relative;
 }
 .layr__pre {
 	margin: 0;
-	padding: 8px 10px;
+	padding: 0.5em 0.75em;
 	background: #282a2e;
 	border-radius: 5px;
 	overflow: auto;
 	max-height: 260px;
 	font-family: monospace;
-	font-size: 12px;
+	font-size: 0.85em;
 	border: 1px solid #373b41;
 }
 .layr__pre::-webkit-scrollbar {
@@ -168,8 +222,8 @@ body {
 }
 .layr__btn--copy {
 	position: absolute;
-	top: 8px;
-	right: 18px;
+	top: 0.5em;
+	right: 1.25em;
 }
 .layr mark {
 	background: #81a2be;

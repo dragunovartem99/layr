@@ -33,7 +33,8 @@ export interface BackgroundPlatform {
 /** Everything the side panel needs from the browser. Implementations are
  * scoped to the panel's own window, so tab activity elsewhere is invisible. */
 export interface PanelPlatform {
-	readonly filterStore: SyncKeyValueStore;
+	/** Panel-side preferences: filter queries, font size. */
+	readonly store: SyncKeyValueStore;
 	connectToBackground(): PortLike;
 	getActiveTabId(): Promise<number | null>;
 	onActiveTabChanged(fn: () => void): void;

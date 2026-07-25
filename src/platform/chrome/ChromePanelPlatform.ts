@@ -8,7 +8,7 @@ type ChromePanelPlatformOptions = {
 };
 
 export class ChromePanelPlatform implements PanelPlatform {
-	readonly filterStore: SyncKeyValueStore = new LocalStorageStore();
+	readonly store: SyncKeyValueStore = new LocalStorageStore();
 
 	#panelPortName: string;
 	#windowId: number | undefined;

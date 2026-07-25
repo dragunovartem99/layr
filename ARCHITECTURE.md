@@ -47,13 +47,13 @@ compiled into all four bundles, with type guards at every boundary.
 Each layer imports only downward; `chrome` appears only in `platform/chrome/`
 and the entry points.
 
-| Layer           | Contents                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------ |
-| `src/protocol/` | Message contract shared by all contexts                                                          |
-| `src/core/`     | Pure logic: `Entry`, `Log`, `FilterState`, `EventBuffer`, `DataLayerObserver`, `Signal`          |
-| `src/platform/` | Browser access behind interfaces: `chrome/` implementations, `mock/` test doubles                |
-| `src/app/`      | Orchestration: `BackgroundApp`, `PanelApp`, `PageApp`                                            |
-| `src/ui/`       | Views subscribing to core stores: `PanelView`, `LogView`, `EntryView`, `FilterView`; `panel.css` |
+| Layer           | Contents                                                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `src/protocol/` | Message contract shared by all contexts                                                                                           |
+| `src/core/`     | Pure logic: `Entry`, `Log`, `FilterState`, `FontScale`, `EventBuffer`, `DataLayerObserver`, `Signal`                              |
+| `src/platform/` | Browser access behind interfaces: `chrome/` implementations, `mock/` test doubles                                                 |
+| `src/app/`      | Orchestration: `BackgroundApp`, `PanelApp`, `PageApp`                                                                             |
+| `src/ui/`       | Views subscribing to core stores: `PanelView`, `LogView`, `EntryView`, `FilterView`, `SettingsView`, `FontScaleView`; `panel.css` |
 
 Conventions:
 
