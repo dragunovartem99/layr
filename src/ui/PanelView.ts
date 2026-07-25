@@ -22,9 +22,9 @@ const TEMPLATE = `
 		<input class="layr__filter" type="search" placeholder="Filter events…"
 			autocomplete="off" spellcheck="false" />
 		<span class="layr__count" aria-live="polite"></span>
+		<button class="layr__btn layr__btn--clear" type="button">Clear</button>
 		<button class="layr__btn layr__btn--icon layr__btn--settings" type="button"
 			title="Settings" aria-label="Settings" aria-expanded="false">${ICON_SETTINGS}</button>
-		<button class="layr__btn layr__btn--clear" type="button">Clear</button>
 	</header>
 	<div class="layr__settings" aria-label="Settings" hidden></div>
 	<ol class="layr__log" aria-label="dataLayer events"></ol>`;
