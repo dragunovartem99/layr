@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Layr",
 	"version": "0.3.0",
-	"description": "Lightweight dataLayer inspector for developers and analytics engineers",
+	"description": "A dataLayer inspector for GTM debugging: live pushes, full JSON, search and copy — right beside the page.",
 	"permissions": ["sidePanel", "storage"],
 	"side_panel": {
 		"default_path": "sidepanel.html"

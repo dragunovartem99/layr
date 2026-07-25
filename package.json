@@ -25,6 +25,7 @@
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
+		"store:assets": "node scripts/store-assets.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"types:check": "tsc --noEmit",
