@@ -9,8 +9,9 @@ Features:
 - Retroactively shows pushes that occurred before the panel was opened
 - Expandable rows with pretty-printed JSON
 - One-click copy of any event payload
-- Filter/search across all captured events
-- Persists across soft navigations within the same tab
+- Filter/search across event names and payloads, with matches highlighted in place
+- Clear the log at any time, and adjust the panel's text size from the settings panel
+- Persists across soft navigations within the same tab; a real page load clears it
 
 No data ever leaves the browser. No network requests, no tracking.
 
