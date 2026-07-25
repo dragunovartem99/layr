@@ -30,7 +30,12 @@ compiled into all four bundles, with type guards at every boundary.
   `chrome.storage.session` and rehydrated on start; every handler awaits a
   `#ready` gate before touching it.
 - **Ports die with the worker.** The panel reconnects on disconnect and
-  re-requests the current tab's buffer.
+  resumes from a cursor (`generation` + `seq`) into the tab's buffer, so it
+  receives only what it missed. Rebuilding the list would collapse every open
+  entry, so a full RESET is reserved for the cases that really replace it:
+  a tab switch, a Clear, a reload, or a cursor the ring buffer has evicted.
+- **Replay must not look like new traffic.** Buffered events carry their
+  capture time, so a resumed entry keeps the timestamp it was pushed at.
 - **Full reloads must clear the log.** The MAIN-world script runs at
   `document_start` on every full (re)load and its NAVIGATE message drops the
   tab's stale buffer.

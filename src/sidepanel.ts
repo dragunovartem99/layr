@@ -13,7 +13,7 @@ const filter = new FilterState(platform.filterStore);
 const app = new PanelApp({
 	platform,
 	onReset: (events) => log.reset(events),
-	onEvent: (raw) => log.append(raw),
+	onAppend: (events) => log.append(events),
 	onTabSwitched: (tabId) => {
 		log.clear();
 		if (tabId !== null) filter.loadForTab(tabId);

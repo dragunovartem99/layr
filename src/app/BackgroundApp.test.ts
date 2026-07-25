@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { Cursor } from "../core/EventBuffer.ts";
 import { MockBackgroundPlatform } from "../platform/mock/MockBackgroundPlatform.ts";
 import { MockKeyValueStore } from "../platform/mock/MockKeyValueStore.ts";
 import { MockPort } from "../platform/mock/MockPort.ts";
@@ -30,6 +31,17 @@ function pushEvent(platform: MockBackgroundPlatform, tabId: number, payload: obj
 	platform.emitContentMessage({ type: MESSAGE_TYPE.EVENT, payload }, tabId);
 }
 
+function request(panel: MockPort, tabId: number, cursor?: Cursor): void {
+	panel.postMessage(
+		cursor
+			? { type: MESSAGE_TYPE.REQUEST, tabId, cursor }
+			: { type: MESSAGE_TYPE.REQUEST, tabId }
+	);
+}
+
+// A buffered event as it goes over the wire; capture time isn't asserted.
+const ev = (seq: number, payload: object): object => ({ seq, at: expect.any(Number), payload });
+
 describe("BackgroundApp buffering", () => {
 	it("replays a tab's buffered events when a panel requests them", async () => {
 		const platform = new MockBackgroundPlatform();
@@ -39,14 +51,15 @@ describe("BackgroundApp buffering", () => {
 		await flush();
 		const { panel, received } = connectPanel(platform);
 
-		panel.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId: 21 });
+		request(panel, 21);
 		await flush();
 
 		expect(received).toEqual([
 			{
 				type: MESSAGE_TYPE.RESET,
 				tabId: 21,
-				events: [{ event: "page_view" }, { event: "add_to_cart" }],
+				generation: 0,
+				events: [ev(1, { event: "page_view" }), ev(2, { event: "add_to_cart" })],
 			},
 		]);
 	});
@@ -63,11 +76,14 @@ describe("BackgroundApp buffering", () => {
 			{
 				type: MESSAGE_TYPE.EVENT,
 				tabId: 3,
-				payload: { event: "purchase", transaction_id: "T-1207" },
+				generation: 0,
+				event: ev(1, { event: "purchase", transaction_id: "T-1207" }),
 			},
 		]);
 	});
+});
 
+describe("BackgroundApp payload normalization", () => {
 	it("normalizes an unserializable payload to an empty object", async () => {
 		const platform = new MockBackgroundPlatform();
 		startApp(platform);
@@ -76,7 +92,72 @@ describe("BackgroundApp buffering", () => {
 		pushEvent(platform, 6, null);
 		await flush();
 
-		expect(received).toEqual([{ type: MESSAGE_TYPE.EVENT, tabId: 6, payload: {} }]);
+		expect(received).toEqual([
+			{ type: MESSAGE_TYPE.EVENT, tabId: 6, generation: 0, event: ev(1, {}) },
+		]);
+	});
+});
+
+describe("BackgroundApp resuming a panel", () => {
+	it("sends only the events a returning panel missed", async () => {
+		const platform = new MockBackgroundPlatform();
+		startApp(platform);
+		pushEvent(platform, 21, { event: "gtm.js" });
+		pushEvent(platform, 21, { event: "page_view" });
+		await flush();
+		const { panel, received } = connectPanel(platform);
+
+		request(panel, 21, { generation: 0, seq: 1 });
+		await flush();
+
+		expect(received).toEqual([
+			{
+				type: MESSAGE_TYPE.SYNC,
+				tabId: 21,
+				generation: 0,
+				events: [ev(2, { event: "page_view" })],
+			},
+		]);
+	});
+
+	it("sends an empty sync to a panel that missed nothing", async () => {
+		const platform = new MockBackgroundPlatform();
+		startApp(platform);
+		pushEvent(platform, 21, { event: "gtm.js" });
+		await flush();
+		const { panel, received } = connectPanel(platform);
+
+		request(panel, 21, { generation: 0, seq: 1 });
+		await flush();
+
+		expect(received).toEqual([
+			{ type: MESSAGE_TYPE.SYNC, tabId: 21, generation: 0, events: [] },
+		]);
+	});
+});
+
+describe("BackgroundApp resync fallback", () => {
+	it("falls back to a full reset when the cursor is from a dropped buffer", async () => {
+		const platform = new MockBackgroundPlatform();
+		startApp(platform);
+		pushEvent(platform, 21, { event: "gtm.js" });
+		await flush();
+		platform.emitContentMessage({ type: MESSAGE_TYPE.NAVIGATE }, 21);
+		pushEvent(platform, 21, { event: "gtm.js" });
+		await flush();
+		const { panel, received } = connectPanel(platform);
+
+		request(panel, 21, { generation: 0, seq: 1 });
+		await flush();
+
+		expect(received).toEqual([
+			{
+				type: MESSAGE_TYPE.RESET,
+				tabId: 21,
+				generation: 1,
+				events: [ev(1, { event: "gtm.js" })],
+			},
+		]);
 	});
 });
 
@@ -90,10 +171,12 @@ describe("BackgroundApp buffer lifecycle", () => {
 		platform.emitContentMessage({ type: MESSAGE_TYPE.NAVIGATE }, 17);
 		await flush();
 		const { panel, received } = connectPanel(platform);
-		panel.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId: 17 });
+		request(panel, 17);
 		await flush();
 
-		expect(received).toEqual([{ type: MESSAGE_TYPE.RESET, tabId: 17, events: [] }]);
+		expect(received).toEqual([
+			{ type: MESSAGE_TYPE.RESET, tabId: 17, generation: 1, events: [] },
+		]);
 	});
 
 	it("clears a tab's buffer on panel request and notifies panels", async () => {
@@ -106,7 +189,9 @@ describe("BackgroundApp buffer lifecycle", () => {
 		panel.postMessage({ type: MESSAGE_TYPE.CLEAR, tabId: 11 });
 		await flush();
 
-		expect(received).toEqual([{ type: MESSAGE_TYPE.RESET, tabId: 11, events: [] }]);
+		expect(received).toEqual([
+			{ type: MESSAGE_TYPE.RESET, tabId: 11, generation: 1, events: [] },
+		]);
 	});
 
 	it("forgets a tab's buffer when the tab closes", async () => {
@@ -118,14 +203,41 @@ describe("BackgroundApp buffer lifecycle", () => {
 		platform.emitTabRemoved(30);
 		await flush();
 		const { panel, received } = connectPanel(platform);
-		panel.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId: 30 });
+		request(panel, 30);
 		await flush();
 
-		expect(received).toEqual([{ type: MESSAGE_TYPE.RESET, tabId: 30, events: [] }]);
+		expect(received).toEqual([
+			{ type: MESSAGE_TYPE.RESET, tabId: 30, generation: 0, events: [] },
+		]);
 	});
 });
 
 describe("BackgroundApp worker restart", () => {
+	it("resumes across a worker restart", async () => {
+		const store = new MockKeyValueStore();
+		const before = new MockBackgroundPlatform({ store });
+		startApp(before);
+		pushEvent(before, 9, { event: "gtm.js" });
+		await flush();
+
+		const after = new MockBackgroundPlatform({ store });
+		startApp(after);
+		pushEvent(after, 9, { event: "purchase", value: 89 });
+		await flush();
+		const { panel, received } = connectPanel(after);
+		request(panel, 9, { generation: 0, seq: 1 });
+		await flush();
+
+		expect(received).toEqual([
+			{
+				type: MESSAGE_TYPE.SYNC,
+				tabId: 9,
+				generation: 0,
+				events: [ev(2, { event: "purchase", value: 89 })],
+			},
+		]);
+	});
+
 	it("serves events buffered before the restart", async () => {
 		const store = new MockKeyValueStore();
 		const before = new MockBackgroundPlatform({ store });
@@ -136,11 +248,16 @@ describe("BackgroundApp worker restart", () => {
 		const after = new MockBackgroundPlatform({ store });
 		startApp(after);
 		const { panel, received } = connectPanel(after);
-		panel.postMessage({ type: MESSAGE_TYPE.REQUEST, tabId: 9 });
+		request(panel, 9);
 		await flush();
 
 		expect(received).toEqual([
-			{ type: MESSAGE_TYPE.RESET, tabId: 9, events: [{ event: "purchase", value: 89 }] },
+			{
+				type: MESSAGE_TYPE.RESET,
+				tabId: 9,
+				generation: 0,
+				events: [ev(1, { event: "purchase", value: 89 })],
+			},
 		]);
 	});
 });

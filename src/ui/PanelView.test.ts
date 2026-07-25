@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilterState } from "../core/FilterState.ts";
 import { Log } from "../core/Log.ts";
 import { MockSyncKeyValueStore } from "../platform/mock/MockSyncKeyValueStore.ts";
+import { buffered, pushEvents } from "../testing/events.ts";
 import { PanelView } from "./PanelView.ts";
 
 type Setup = {
@@ -35,8 +36,8 @@ describe("PanelView rendering", () => {
 	it("renders appended entries in order with a total count", () => {
 		const { log } = setup();
 
-		log.append({ event: "page_view" });
-		log.append({ event: "view_item", item_id: "SKU-77" });
+		pushEvents(log, { event: "page_view" });
+		pushEvents(log, { event: "view_item", item_id: "SKU-77" });
 
 		expect(rows()).toHaveLength(2);
 		expect(rows()[0]?.textContent).toContain("page_view");
@@ -46,9 +47,9 @@ describe("PanelView rendering", () => {
 
 	it("rebuilds the list on reset", () => {
 		const { log } = setup();
-		log.append({ event: "stale_before_reload" });
+		pushEvents(log, { event: "stale_before_reload" });
 
-		log.reset([{ event: "gtm.js" }, { event: "gtm.dom" }]);
+		log.reset(buffered([{ event: "gtm.js" }, { event: "gtm.dom" }]));
 
 		expect(rows()).toHaveLength(2);
 		expect(document.body.textContent).not.toContain("stale_before_reload");
@@ -56,7 +57,7 @@ describe("PanelView rendering", () => {
 
 	it("empties the list on clear", () => {
 		const { log } = setup();
-		log.append({ event: "sign_up" });
+		pushEvents(log, { event: "sign_up" });
 
 		log.clear();
 
@@ -68,8 +69,8 @@ describe("PanelView rendering", () => {
 describe("PanelView filtering", () => {
 	it("hides non-matching rows and shows the filtered count", () => {
 		const { log, filter } = setup();
-		log.append({ event: "page_view" });
-		log.append({ event: "purchase", value: 120 });
+		pushEvents(log, { event: "page_view" });
+		pushEvents(log, { event: "purchase", value: 120 });
 
 		filter.setQuery("purchase");
 
@@ -82,8 +83,8 @@ describe("PanelView filtering", () => {
 		const { log, filter } = setup();
 		filter.setQuery("purchase");
 
-		log.append({ event: "page_view" });
-		log.append({ event: "purchase" });
+		pushEvents(log, { event: "page_view" });
+		pushEvents(log, { event: "purchase" });
 
 		expect(visibleRows()).toHaveLength(1);
 		expect(countText()).toBe("1 / 2");
@@ -91,8 +92,8 @@ describe("PanelView filtering", () => {
 
 	it("restores all rows when the query clears", () => {
 		const { log, filter } = setup();
-		log.append({ event: "page_view" });
-		log.append({ event: "purchase" });
+		pushEvents(log, { event: "page_view" });
+		pushEvents(log, { event: "purchase" });
 		filter.setQuery("purchase");
 
 		filter.setQuery("");

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilterState } from "../core/FilterState.ts";
 import { Log } from "../core/Log.ts";
 import { MockSyncKeyValueStore } from "../platform/mock/MockSyncKeyValueStore.ts";
+import { pushEvents } from "../testing/events.ts";
 import { FilterView } from "./FilterView.ts";
 
 type Setup = {
@@ -44,18 +45,18 @@ describe("FilterView count", () => {
 	it("renders the total count as entries arrive", () => {
 		const { log, count } = setup();
 
-		log.append({ event: "gtm.js" });
-		log.append({ event: "checkout_progress", step: 2 });
-		log.append({ event: "login", method: "google" });
+		pushEvents(log, { event: "gtm.js" });
+		pushEvents(log, { event: "checkout_progress", step: 2 });
+		pushEvents(log, { event: "login", method: "google" });
 
 		expect(count.textContent).toBe("3");
 	});
 
 	it("renders visible / total while a query is active", () => {
 		const { log, filter, count } = setup();
-		log.append({ event: "view_promotion", promotion_id: "SUMMER24" });
-		log.append({ event: "select_promotion", promotion_id: "SUMMER24" });
-		log.append({ event: "scroll", percent: 90 });
+		pushEvents(log, { event: "view_promotion", promotion_id: "SUMMER24" });
+		pushEvents(log, { event: "select_promotion", promotion_id: "SUMMER24" });
+		pushEvents(log, { event: "scroll", percent: 90 });
 
 		filter.setQuery("promotion");
 
@@ -64,7 +65,7 @@ describe("FilterView count", () => {
 
 	it("restores the total count when the query clears", () => {
 		const { log, filter, count } = setup();
-		log.append({ event: "add_payment_info" });
+		pushEvents(log, { event: "add_payment_info" });
 		filter.setQuery("refund");
 
 		filter.setQuery("");

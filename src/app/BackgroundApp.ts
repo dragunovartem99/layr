@@ -1,5 +1,5 @@
 import { EventBuffer } from "../core/EventBuffer.ts";
-import type { BufferSnapshot } from "../core/EventBuffer.ts";
+import type { BufferSnapshot, Cursor } from "../core/EventBuffer.ts";
 import type { BackgroundPlatform, PortLike } from "../platform/types.ts";
 import { MESSAGE_TYPE, isContentMessage, isPanelOutMessage } from "../protocol/messages.ts";
 import type { ContentMessage, PanelInMessage } from "../protocol/messages.ts";
@@ -62,7 +62,21 @@ export class BackgroundApp {
 	}
 
 	#pushReset(port: PortLike, tabId: number): void {
-		this.#send(port, { type: MESSAGE_TYPE.RESET, tabId, events: this.#buffer.get(tabId) });
+		const { generation, events } = this.#buffer.get(tabId);
+		this.#send(port, { type: MESSAGE_TYPE.RESET, tabId, generation, events });
+	}
+
+	// Answers a REQUEST. A panel that already holds part of the buffer (it
+	// reconnected after the worker idled out) gets only what it missed, so its
+	// entries survive; anything the buffer can't fill in gets a full RESET.
+	#pushRequested(port: PortLike, tabId: number, cursor: Cursor | undefined): void {
+		const missed = cursor && this.#buffer.since(tabId, cursor);
+		if (!missed) {
+			this.#pushReset(port, tabId);
+			return;
+		}
+		const { generation } = this.#buffer.get(tabId);
+		this.#send(port, { type: MESSAGE_TYPE.SYNC, tabId, generation, events: missed });
 	}
 
 	// Broadcasts the (now empty) buffer to every panel. Each panel only applies
@@ -89,10 +103,11 @@ export class BackgroundApp {
 
 	async #bufferAndBroadcast(tabId: number, payload: object): Promise<void> {
 		await this.#ready;
-		this.#buffer.append({ tabId, payload });
+		const event = this.#buffer.append({ tabId, payload });
+		const { generation } = this.#buffer.get(tabId);
 		this.#persist();
 		for (const port of this.#panels) {
-			this.#send(port, { type: MESSAGE_TYPE.EVENT, tabId, payload });
+			this.#send(port, { type: MESSAGE_TYPE.EVENT, tabId, generation, event });
 		}
 	}
 
@@ -102,7 +117,9 @@ export class BackgroundApp {
 		port.onMessage((message) => {
 			if (!isPanelOutMessage(message)) return;
 			if (message.type === MESSAGE_TYPE.REQUEST) {
-				void this.#ready.then(() => this.#pushReset(port, message.tabId));
+				void this.#ready.then(() =>
+					this.#pushRequested(port, message.tabId, message.cursor)
+				);
 			}
 			if (message.type === MESSAGE_TYPE.CLEAR) {
 				void this.#ready.then(() => this.#clearBuffer(message.tabId));

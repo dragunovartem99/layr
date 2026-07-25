@@ -1,4 +1,5 @@
 import { Entry } from "./Entry.ts";
+import type { BufferedEvent } from "./EventBuffer.ts";
 import { Signal } from "./Signal.ts";
 
 /** Panel-side store of the entries currently on screen. Views subscribe to
@@ -6,16 +7,30 @@ import { Signal } from "./Signal.ts";
 export class Log {
 	readonly entries = new Signal<readonly Entry[]>([]);
 
-	append(raw: object): void {
-		const entry = new Entry({ order: this.entries.value.length + 1, raw });
-		this.entries.value = [...this.entries.value, entry];
+	// Extends the log. Entries already on screen keep their identity, so views
+	// can leave the rows they've built alone.
+	append(events: readonly BufferedEvent[]): void {
+		if (events.length === 0) return;
+		const current = this.entries.value;
+		this.entries.value = [...current, ...toEntries(events, current.length)];
 	}
 
-	reset(raws: readonly object[]): void {
-		this.entries.value = raws.map((raw, index) => new Entry({ order: index + 1, raw }));
+	reset(events: readonly BufferedEvent[]): void {
+		this.entries.value = toEntries(events, 0);
 	}
 
 	clear(): void {
 		this.entries.value = [];
 	}
+}
+
+function toEntries(events: readonly BufferedEvent[], offset: number): Entry[] {
+	return events.map(
+		(event, index) =>
+			new Entry({
+				order: offset + index + 1,
+				raw: event.payload,
+				receivedAt: new Date(event.at),
+			})
+	);
 }

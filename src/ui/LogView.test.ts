@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { FilterState } from "../core/FilterState.ts";
 import { Log } from "../core/Log.ts";
 import { MockSyncKeyValueStore } from "../platform/mock/MockSyncKeyValueStore.ts";
+import { buffered, pushEvents } from "../testing/events.ts";
 import { LogView } from "./LogView.ts";
 
 type Setup = {
@@ -33,10 +34,10 @@ function fakeScrollMetrics(
 describe("LogView incremental rendering", () => {
 	it("reuses existing row elements when entries are appended", () => {
 		const { log, list } = setup();
-		log.append({ event: "view_cart", value: 49.9 });
+		pushEvents(log, { event: "view_cart", value: 49.9 });
 		const firstRow = list.children[0];
 
-		log.append({ event: "begin_checkout" });
+		pushEvents(log, { event: "begin_checkout" });
 
 		expect(list.children).toHaveLength(2);
 		expect(list.children[0]).toBe(firstRow);
@@ -44,10 +45,10 @@ describe("LogView incremental rendering", () => {
 
 	it("rebuilds every row on reset", () => {
 		const { log, list } = setup();
-		log.append({ event: "stale_before_reload" });
+		pushEvents(log, { event: "stale_before_reload" });
 		const staleRow = list.children[0];
 
-		log.reset([{ event: "gtm.js" }, { event: "search", search_term: "boots" }]);
+		log.reset(buffered([{ event: "gtm.js" }, { event: "search", search_term: "boots" }]));
 
 		expect(list.children).toHaveLength(2);
 		expect([...list.children]).not.toContain(staleRow);
@@ -59,7 +60,7 @@ describe("LogView scroll pinning", () => {
 		const { log, list } = setup();
 		fakeScrollMetrics(list, { scrollTop: 380, scrollHeight: 600, clientHeight: 200 });
 
-		log.append({ event: "generate_lead", currency: "USD" });
+		pushEvents(log, { event: "generate_lead", currency: "USD" });
 
 		expect(list.scrollTop).toBe(600);
 	});
@@ -68,7 +69,7 @@ describe("LogView scroll pinning", () => {
 		const { log, list } = setup();
 		fakeScrollMetrics(list, { scrollTop: 100, scrollHeight: 600, clientHeight: 200 });
 
-		log.append({ event: "purchase", transaction_id: "T-1042" });
+		pushEvents(log, { event: "purchase", transaction_id: "T-1042" });
 
 		expect(list.scrollTop).toBe(100);
 	});
