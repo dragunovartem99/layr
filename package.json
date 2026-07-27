@@ -25,7 +25,7 @@
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
-		"store:assets": "node scripts/store-assets.ts",
+		"store:assets": "node scripts/store-assets/index.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"types:check": "tsc --noEmit",
@@ -34,8 +34,10 @@
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.1.0",
 		"@dragunovartem99/oxlint-config": "^2.0.0",
+		"@resvg/resvg-js": "^2.6.2",
 		"@types/chrome": "^0.2.2",
 		"happy-dom": "^20.10.6",
+		"satori": "^0.29.0",
 		"typescript": "~6.0.2",
 		"vite": "^8.1.0",
 		"vitest": "^4.1.10"
