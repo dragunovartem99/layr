@@ -1,7 +1,7 @@
 {
 	"name": "layr",
 	"private": true,
-	"description": "Lightweight dataLayer inspector for developers and analytics engineers",
+	"description": "Layr — dataLayer inspector for GTM & GA4 debugging, in the Chrome side panel",
 	"keywords": [],
 	"homepage": "https://github.com/dragunovartem99/layr#readme",
 	"bugs": {
@@ -44,10 +44,13 @@
 	},
 	"tags": [
 		"dataLayer",
+		"dataLayer-inspector",
 		"inspector",
 		"analytics",
 		"debugging",
 		"GTM",
+		"GA4",
+		"google-tag-manager",
 		"tag-manager"
 	]
 }

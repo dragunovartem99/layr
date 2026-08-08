@@ -1,8 +1,8 @@
 {
 	"manifest_version": 3,
-	"name": "Layr",
-	"version": "0.3.0",
-	"description": "A dataLayer inspector for GTM debugging: live pushes, full JSON, search and copy — right beside the page.",
+	"name": "Layr — dataLayer Inspector for GTM & GA4",
+	"version": "0.3.1",
+	"description": "Inspect the dataLayer live: every push, full JSON, search and copy — right beside the page. GTM, GA4, Adobe, Tealium.",
 	"permissions": ["sidePanel", "storage"],
 	"side_panel": {
 		"default_path": "sidepanel.html"
