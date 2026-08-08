@@ -1,7 +1,10 @@
 # Chrome Web Store listing
 
+Title: Layr — dataLayer Inspector for GTM & GA4
+
 Layr is a dataLayer inspector that lives in the Chrome side panel, built for
-developers and analytics engineers who spend their day verifying tracking.
+developers and analytics engineers who spend their day verifying Google Tag
+Manager and GA4 tracking.
 
 Open it on any page and you see every window.dataLayer.push() call as it
 happens — event name, timestamp and the full payload — next to the page
