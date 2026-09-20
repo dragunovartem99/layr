@@ -1,4 +1,4 @@
-import { dots } from "./backdrop.ts";
+import { waves } from "./backdrop.ts";
 import { div, text, type Element } from "./elements.ts";
 import { DISPLAY } from "./fonts.ts";
 import { mark } from "./mark.ts";
@@ -97,6 +97,6 @@ function panel(): Element {
 export function tile(): Element {
 	return div(
 		{ width: TILE_WIDTH, height: TILE_HEIGHT, position: "relative", backgroundColor: BG },
-		[dots(TILE_WIDTH, TILE_HEIGHT), copy(), panel()]
+		[waves(TILE_WIDTH, TILE_HEIGHT), copy(), panel()]
 	);
 }

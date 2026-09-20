@@ -1,4 +1,4 @@
-import { dots } from "./backdrop.ts";
+import { waves } from "./backdrop.ts";
 import { div, line, text, type Element } from "./elements.ts";
 import { DISPLAY, UI } from "./fonts.ts";
 import { mark } from "./mark.ts";
@@ -167,7 +167,7 @@ export function promo(): Element {
 			backgroundColor: BG,
 		},
 		[
-			dots(PROMO_WIDTH, PROMO_HEIGHT),
+			waves(PROMO_WIDTH, PROMO_HEIGHT),
 			div({ width: PROMO_WIDTH, height: PROMO_HEIGHT, alignItems: "center" }, [
 				copy(),
 				panel(),
