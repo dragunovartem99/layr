@@ -25,16 +25,16 @@
 		"format:check": "oxfmt --check",
 		"lint": "oxlint --fix",
 		"lint:check": "oxlint",
+		"prepare": "husky",
 		"store:assets": "node scripts/store-assets/index.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"types:check": "tsc --noEmit",
-		"zip:google": "npm run build && rm -f dist-google.zip && zip -r dist-google.zip dist",
-		"prepare": "husky"
+		"zip:google": "npm run build && rm -f dist-google.zip && zip -r dist-google.zip dist"
 	},
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.1.0",
-		"@dragunovartem99/oxlint-config": "^2.0.0",
+		"@dragunovartem99/oxlint-config": "^3.0.1",
 		"@resvg/resvg-js": "^2.6.2",
 		"@types/chrome": "^0.2.2",
 		"happy-dom": "^20.10.6",

@@ -4,8 +4,9 @@ import type { Element } from "./elements.ts";
 import { DISPLAY } from "./fonts.ts";
 import { mark } from "./mark.ts";
 import { BG, BLUE, TEXT_BRIGHT, TEXT_DIM, tint } from "./palette.ts";
-import { EVENTS, json, PURCHASE_BRIEF, row, toolbar } from "./panel.ts";
+import { json, row, toolbar } from "./panel.ts";
 import type { PanelScale } from "./panel.ts";
+import { EVENTS, PURCHASE_BRIEF } from "./sample.ts";
 
 export const TILE_WIDTH = 440;
 export const TILE_HEIGHT = 280;
