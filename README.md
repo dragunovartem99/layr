@@ -16,3 +16,13 @@ Features:
 No data ever leaves the browser. No network requests, no tracking.
 
 <img alt="Screenshot of Layr extension" src="store/assets/screenshot-1280x800.png" />
+
+## Development
+
+```sh
+npm ci
+npm run dev
+```
+
+Pull requests run `format:check`, `types:check`, `lint:check` and `test`, and so does the pre-commit
+hook. `npm run zip:google` builds the zip to upload to the Chrome Web Store
