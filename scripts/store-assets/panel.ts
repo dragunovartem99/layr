@@ -1,4 +1,5 @@
-import { div, line, text, type Element } from "./elements.ts";
+import { div, line, text } from "./elements.ts";
+import type { Element } from "./elements.ts";
 import { MONO, UI } from "./fonts.ts";
 import { BG, BLUE, GREEN, SURFACE, TEXT, TEXT_BRIGHT, TEXT_DIM, tint, YELLOW } from "./palette.ts";
 

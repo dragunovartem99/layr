@@ -1,5 +1,6 @@
 import { waves } from "./backdrop.ts";
-import { div, line, text, type Element } from "./elements.ts";
+import { div, line, text } from "./elements.ts";
+import type { Element } from "./elements.ts";
 import { DISPLAY, UI } from "./fonts.ts";
 import { mark } from "./mark.ts";
 import {
@@ -14,7 +15,8 @@ import {
 	tint,
 	YELLOW,
 } from "./palette.ts";
-import { EVENTS, json, PURCHASE_FULL, row, toolbar, type PanelScale } from "./panel.ts";
+import { EVENTS, json, PURCHASE_FULL, row, toolbar } from "./panel.ts";
+import type { PanelScale } from "./panel.ts";
 
 export const PROMO_WIDTH = 1280;
 export const PROMO_HEIGHT = 800;

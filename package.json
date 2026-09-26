@@ -29,7 +29,8 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"types:check": "tsc --noEmit",
-		"zip:google": "npm run build && rm -f dist-google.zip && zip -r dist-google.zip dist"
+		"zip:google": "npm run build && rm -f dist-google.zip && zip -r dist-google.zip dist",
+		"prepare": "husky"
 	},
 	"devDependencies": {
 		"@dragunovartem99/oxfmt-config": "^2.1.0",
@@ -37,6 +38,7 @@
 		"@resvg/resvg-js": "^2.6.2",
 		"@types/chrome": "^0.2.2",
 		"happy-dom": "^20.10.6",
+		"husky": "^9.1.7",
 		"satori": "^0.29.0",
 		"typescript": "~6.0.2",
 		"vite": "^8.1.0",
