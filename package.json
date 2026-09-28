@@ -36,10 +36,10 @@
 		"@dragunovartem99/oxfmt-config": "^2.1.0",
 		"@dragunovartem99/oxlint-config": "^3.0.1",
 		"@resvg/resvg-js": "^2.6.2",
-		"@types/chrome": "^0.2.2",
+		"@types/chrome": "^0.3.0",
 		"happy-dom": "^20.10.6",
 		"husky": "^9.1.7",
-		"satori": "^0.29.0",
+		"satori": "^0.33.0",
 		"typescript": "~6.0.2",
 		"vite": "^8.1.0",
 		"vitest": "^4.1.10"
