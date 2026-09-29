@@ -21,8 +21,10 @@ No data ever leaves the browser. No network requests, no tracking.
 
 ```sh
 npm ci
-npm run dev
+npm run build
 ```
+
+Then load `dist/` via **Load unpacked** in `chrome://extensions`; rebuild and hit reload after changes.
 
 Pull requests run `format:check`, `types:check`, `lint:check` and `test`, and so does the pre-commit
 hook. `npm run zip:google` builds the zip to upload to the Chrome Web Store
