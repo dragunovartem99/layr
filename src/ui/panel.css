@@ -13,11 +13,7 @@ body {
 	height: 100%;
 	background: #1d1f21;
 	color: #e2e4e3;
-	font-family:
-		system-ui,
-		-apple-system,
-		"Segoe UI",
-		sans-serif;
+	font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 	font-size: calc(var(--layr-font-base, 14px) * var(--layr-font-scale, 1));
 	line-height: 1.5;
 	display: flex;
