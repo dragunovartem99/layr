@@ -26,7 +26,7 @@ function wave(width: number, y: number, phase: number): string {
 export function waves(width: number, height: number): Element {
 	const lines: string[] = [];
 
-	for (let y = -AMPLITUDE, i = 0; y <= height + AMPLITUDE; y += SPACING, i++) {
+	for (let i = 0, y = -AMPLITUDE; y <= height + AMPLITUDE; y += SPACING, i++) {
 		lines.push(wave(width, y, i * PHASE_STEP));
 	}
 

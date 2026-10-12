@@ -11,7 +11,8 @@ export class DataLayerObserver {
 	#existing: object[] = [];
 
 	constructor(host: DataLayerHost) {
-		const dl = (host.dataLayer ??= []);
+		host.dataLayer ??= [];
+		const dl = host.dataLayer;
 		this.#existing = [...dl];
 		if ((dl.push as unknown as Record<string, unknown>)[PATCHED]) return;
 		this.#patch(dl);
